@@ -1,0 +1,14 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /assets/{allPaths=**} {
+      allow read;  // Allow public read access to assets folder
+      allow write: if false;  // Prevent any writes
+    }
+    match /{allPaths=**} {
+      allow read: if false;  // Prevent read access to other folders
+      allow write: if false;  // Prevent writes to other folders
+    }
+  }
+}

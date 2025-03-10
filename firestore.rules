@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rsvps/{rsvpId} {
+      // Allow anyone to create and read RSVPs
+      allow read, create: if true;
+      
+      // Allow anyone to update their own RSVP (by phone number)
+      // or allow any authenticated user to update any RSVP
+      allow update: if request.auth != null ||
+                   resource.data.phone == request.resource.data.phone;
+      
+      // Allow any authenticated user to delete RSVPs
+      allow delete: if request.auth != null;
+    }
+  }
+}

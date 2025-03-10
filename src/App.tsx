@@ -238,7 +238,7 @@ function App() {
           )}
 
           <div id="rsvp-form">
-            <RSVPForm />
+            <RSVPForm onRsvpChange={setUserHasRsvp} />
           </div>
 
           {/* Footer Image and Signature */}

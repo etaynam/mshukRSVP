@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { auth, db } from '../lib/firebase';
-import { collection, query, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { RSVPFormData } from '../types';
-import { ChevronDown, ChevronUp, Download, Home, Search, SortAsc, SortDesc, Trash2, Edit2, X, Save } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, Home, Search, SortAsc, SortDesc, Trash2, Edit2, X, Save, Eye, Calendar, Power } from 'lucide-react';
 import { branches } from '../data/branches';
 import clsx from 'clsx';
 
@@ -38,6 +38,10 @@ const AdminPanel: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<RSVPFormData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [eventStatus, setEventStatus] = useState<{closed: boolean; loading: boolean}>({ 
+    closed: false, 
+    loading: true 
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,6 +66,27 @@ const AdminPanel: React.FC = () => {
         setLoading(false);
       }
     );
+
+    // בדיקת מצב האירוע מהדאטאבייס
+    const checkEventStatus = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'event'));
+        
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          setEventStatus({ closed: !!data.closed, loading: false });
+        } else {
+          // אם המסמך לא קיים, יוצרים אותו עם ברירת מחדל
+          await setDoc(doc(db, 'settings', 'event'), { closed: false });
+          setEventStatus({ closed: false, loading: false });
+        }
+      } catch (error) {
+        console.error('Error checking event status:', error);
+        setEventStatus(prev => ({ ...prev, loading: false }));
+      }
+    };
+    
+    checkEventStatus();
 
     return () => {
       unsubAuth();
@@ -204,6 +229,35 @@ const AdminPanel: React.FC = () => {
     return sortDirection === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />;
   };
 
+  // Toggle event closed status
+  const toggleEventStatus = async () => {
+    try {
+      setEventStatus(prev => ({ ...prev, loading: true }));
+      const newStatus = !eventStatus.closed;
+      
+      await setDoc(doc(db, 'settings', 'event'), { 
+        closed: newStatus,
+        lastUpdated: new Date().toISOString()
+      });
+      
+      setEventStatus({ closed: newStatus, loading: false });
+    } catch (error) {
+      console.error('Error updating event status:', error);
+      setEventStatus(prev => ({ ...prev, loading: false }));
+      setError('אירעה שגיאה בעדכון מצב האירוע');
+    }
+  };
+
+  // Preview event closed page - האירוע היום
+  const previewEventDayPage = () => {
+    window.open('/event-closed', '_blank');
+  };
+
+  // Preview event closed page - האירוע הסתיים
+  const previewEventEndedPage = () => {
+    window.open('/event-closed?afterEvent=true', '_blank');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -253,6 +307,66 @@ const AdminPanel: React.FC = () => {
             >
               התנתק
             </button>
+          </div>
+        </div>
+
+        {/* Event Status Controls */}
+        <div className="bg-black/30 rounded-lg p-6 mb-8 border border-emerald-500/20">
+          <h2 className="text-xl font-semibold text-emerald-400 mb-4">ניהול מצב האירוע</h2>
+          
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+            <div className="flex items-center gap-2">
+              <div className={clsx(
+                "w-3 h-3 rounded-full",
+                eventStatus.closed ? "bg-red-500" : "bg-emerald-500",
+                eventStatus.loading && "animate-pulse"
+              )}></div>
+              <span className="text-white">
+                מצב האירוע: {eventStatus.closed ? 'סגור' : 'פתוח'}
+              </span>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={toggleEventStatus}
+                disabled={eventStatus.loading}
+                className={clsx(
+                  "flex items-center gap-2 px-4 py-2 rounded-lg transition-colors",
+                  eventStatus.closed 
+                    ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400" 
+                    : "bg-red-500/20 hover:bg-red-500/30 text-red-400",
+                  eventStatus.loading && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <Power className="w-4 h-4" />
+                {eventStatus.closed ? 'פתח את האירוע' : 'סגור את האירוע'}
+              </button>
+              
+              <button
+                onClick={previewEventDayPage}
+                className="flex items-center gap-2 px-4 py-2 bg-black/50 hover:bg-black/70 text-emerald-400 rounded-lg transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                תצוגה מקדימה - האירוע היום
+              </button>
+
+              <button
+                onClick={previewEventEndedPage}
+                className="flex items-center gap-2 px-4 py-2 bg-black/50 hover:bg-black/70 text-emerald-400 rounded-lg transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                תצוגה מקדימה - האירוע הסתיים
+              </button>
+            </div>
+          </div>
+          
+          <div className="mt-4 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-amber-400 text-sm">
+            <p>
+              <strong>שים לב:</strong> סגירת האירוע תגרום להצגת מסך "האירוע נסגר" לכל המשתמשים. המשתמשים לא יוכלו להשתמש בטופס אישור ההגעה עד לפתיחת האירוע מחדש.
+            </p>
+            <p className="mt-2">
+              <strong>מעבר אוטומטי:</strong> האתר יעבור אוטומטית למצב "אירוע היום" בתאריך 23/03/2025 בשעה 17:00, ולמצב "אירוע הסתיים" בתאריך 24/03/2025.
+            </p>
           </div>
         </div>
 

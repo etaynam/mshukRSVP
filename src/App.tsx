@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, Sparkles, Music4, Award } from 'lucide-react';
+import { ChevronDown, Sparkles, Music4, Award, Clock, MapPin } from 'lucide-react';
 import RSVPForm from './components/RSVPForm';
 import { getLogoUrl } from './lib/firebase';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
+import { db } from './lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import EventClosedPage from './pages/EventClosedPage';
+import CountdownTimer from './components/CountdownTimer';
 
 function App() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [showScrollHint, setShowScrollHint] = useState(false);
-  const [hasRSVP, setHasRSVP] = useState(false);
+  const [userHasRsvp, setUserHasRsvp] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
+  const [eventClosed, setEventClosed] = useState(false);
+  // תאריך האירוע - 23/03/2025 בשעה 19:30
+  const eventDate = new Date('2025-03-23T19:30:00');
 
   useEffect(() => {
     const loadLogo = async () => {
@@ -36,9 +43,24 @@ function App() {
 
     loadLogo();
 
+    // Check if the event is closed from Firestore settings
+    const checkEventStatus = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'event'));
+        const data = settingsDoc.data();
+        if (data && data.closed) {
+          setEventClosed(true);
+        }
+      } catch (error) {
+        console.error('Error checking event status:', error);
+      }
+    };
+    
+    checkEventStatus();
+
     // Check if user has already RSVP'd
-    const storedRSVP = localStorage.getItem('purim_party_rsvp');
-    setHasRSVP(!!storedRSVP);
+    const storedRsvp = localStorage.getItem('purim_party_rsvp');
+    setUserHasRsvp(!!storedRsvp);
 
     const handleScroll = () => {
       const formElement = document.getElementById('rsvp-form');
@@ -53,6 +75,11 @@ function App() {
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // אם האירוע נסגר, נציג את עמוד האירוע נסגר
+  if (eventClosed) {
+    return <EventClosedPage forceShow={true} />;
+  }
 
   if (isLoading) {
     return (
@@ -125,13 +152,42 @@ function App() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                <div className="animate-fade-in" style={{ animationDelay: '0.7s' }}>
-                  <div className="text-3xl md:text-4xl font-light">19:30</div>
-                  <div className="text-sm text-emerald-400">פתיחת האירוע</div>
+              {/* קאונטדאון ספירה לאחור */}
+              <CountdownTimer targetDate={eventDate} />
+
+              {/* שורה ראשונה: שעה ומקום */}
+              <div className="grid grid-cols-2 gap-6 md:gap-8 mt-8">
+                {/* שעה */}
+                <div className="animate-fade-in relative pt-12 pb-4" style={{ animationDelay: '0.7s' }}>
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-emerald-400" />
+                    </div>
+                  </div>
+                  <div className="text-2xl md:text-3xl font-light bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
+                    19:30
+                  </div>
+                  <div className="text-sm text-emerald-400 mt-1">פתיחת האירוע</div>
                 </div>
 
-                <div className="animate-fade-in relative pt-8" style={{ animationDelay: '0.8s' }}>
+                {/* מקום */}
+                <div className="animate-fade-in relative pt-12 pb-4" style={{ animationDelay: '0.8s' }}>
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <MapPin className="w-6 h-6 text-emerald-400" />
+                    </div>
+                  </div>
+                  <div className="text-2xl md:text-3xl font-light bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
+                    אולמי "סופיה"
+                  </div>
+                  <div className="text-sm text-emerald-400 mt-1">יצחק סלמה 1, באר שבע</div>
+                </div>
+              </div>
+
+              {/* שורה שניה: אמן אורח ותחרות תחפושות */}
+              <div className="grid grid-cols-2 gap-6 md:gap-8 mt-12">
+                {/* אמן אורח */}
+                <div className="animate-fade-in relative pt-12 pb-4" style={{ animationDelay: '0.9s' }}>
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
                       <Music4 className="w-6 h-6 text-emerald-400" />
@@ -140,38 +196,46 @@ function App() {
                   <div className="text-2xl md:text-3xl font-light bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
                     אומן אורח
                   </div>
-                  <div className="text-sm text-emerald-400">הפתעה מיוחדת!</div>
+                  <div className="text-sm text-emerald-400 mt-1">שיעיף את הרחבה</div>
                 </div>
 
-                <div className="animate-fade-in" style={{ animationDelay: '0.9s' }}>
-                  <div className="text-2xl md:text-3xl font-light">אולמי "סופיה"</div>
-                  <div className="text-sm text-emerald-400">יצחק סלמה 1, באר שבע</div>
-                </div>
-              </div>
-              
-              {/* תחרות תחפושות */}
-              <div className="mt-12 animate-fade-in relative pt-8" style={{ animationDelay: '1s' }}>
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                    <Award className="w-6 h-6 text-emerald-400" />
+                {/* תחרות תחפושות */}
+                <div className="animate-fade-in relative pt-12 pb-4" style={{ animationDelay: '1s' }}>
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <Award className="w-6 h-6 text-emerald-400" />
+                    </div>
                   </div>
+                  <div className="text-2xl md:text-3xl font-light bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
+                    תחרות תחפושות
+                  </div>
+                  <div className="text-sm text-emerald-400 mt-1">נושאת פרסים!</div>
                 </div>
-                <div className="text-2xl md:text-3xl font-light bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
-                  תחרות תחפושות
-                </div>
-                <div className="text-sm text-emerald-400">נושאת פרסים!</div>
               </div>
             </div>
           </div>
 
           <div className="glass-card rounded-2xl p-6 md:p-8 mb-8 md:mb-16">
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-              <p className="text-red-400 font-medium text-center">
-                ⚠️ שימו לב: האירוע מיועד לעובדי החברה בלבד
-                לא תתאפשר כניסה לבני/בנות זוג שאינם עובדי הרשת
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 shadow-inner shadow-amber-500/5">
+              <p className="text-amber-400 font-medium text-center">
+              כדי לאפשר אווירה כיפית ומגבשת במיוחד, הנשף השנה יתקיים לעובדים בלבד, ללא בני/בנות זוג.
+              <br />
+              מחכים לכם לערב מלא חוויות, שמחה ואווירה מיוחדת
               </p>
             </div>
           </div>
+
+          {/* כותרת אישור הגעה - מוצגת רק אם אין עדיין רישום */}
+          {!userHasRsvp && (
+            <div className="text-center mb-8 animate-fade-in" style={{ animationDelay: '0.7s' }}>
+              <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-300 to-emerald-500 bg-clip-text text-transparent mb-2">
+                אשרו את הגעתכם עכשיו!
+              </h2>
+              <p className="text-emerald-400/70">
+                כדי שנוכל להיערך כראוי ולשמור לכם מקום, אנא מלאו את הטופס
+              </p>
+            </div>
+          )}
 
           <div id="rsvp-form">
             <RSVPForm />
@@ -202,7 +266,7 @@ function App() {
           {showScrollHint && (
             <div className="fixed bottom-0 left-0 right-0 bg-emerald-900/90 backdrop-blur-lg border-t border-emerald-500/20 shadow-lg shadow-emerald-900/50 transition-all duration-300 z-50">
               <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-                {hasRSVP ? (
+                {userHasRsvp ? (
                   <>
                     <span className="text-emerald-100">נשמח לראות אותך בנשף! 🎭</span>
                     <button 

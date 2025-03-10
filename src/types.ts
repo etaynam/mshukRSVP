@@ -11,12 +11,15 @@ export interface RSVPFormData {
   submittedAt?: string;
   lastModifiedAt?: string;
   ipAddress?: string;
+  phoneVerified?: boolean;
+  phoneVerifiedAt?: string;
 }
 
 export interface Branch {
   value: string;
   label: string;
   city?: string;
+  address?: string;
 }
 
 export interface StoredRSVP {

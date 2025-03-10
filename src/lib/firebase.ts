@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 // Validate environment variables
 const requiredEnvVars = {
@@ -17,7 +18,7 @@ const requiredEnvVars = {
 
 // Check for missing environment variables
 const missingVars = Object.entries(requiredEnvVars)
-  .filter(([_, value]) => !value)
+  .filter(([, value]) => !value)
   .map(([key]) => key);
 
 if (missingVars.length > 0) {
@@ -41,6 +42,11 @@ export const db = getFirestore(app);
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 export const storage = getStorage(app);
 export const auth = getAuth(app);
+export const functions = getFunctions(app, 'europe-west1');
+
+// Cloud Functions
+export const sendOtp = httpsCallable(functions, 'sendOtp');
+export const verifyOtp = httpsCallable(functions, 'verifyOtp');
 
 // Helper function to get logo URL
 export const getLogoUrl = async () => {

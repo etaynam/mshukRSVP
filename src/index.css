@@ -252,3 +252,15 @@
 .input-glow:focus {
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
+.flex.items-center.justify-end.gap-3 {
+  justify-content: flex-start;
+}
+
+/* סגנון לתצוגת אפשרויות הסניף */
+.branch-select .branch-select__option-address {
+  display: block;
+  font-size: 0.7rem;
+  color: rgba(52, 211, 153, 0.8);
+  margin-top: 0.25rem;
+  font-weight: normal;
+}

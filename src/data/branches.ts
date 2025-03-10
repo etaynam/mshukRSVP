@@ -69,5 +69,6 @@ export const branches: Branch[] = [
   { value: "שדרות_ניצה", label: "שדרות ניצה", city: "נתניה", address: "שדרות ניצה 8" },
   { value: "שכונה_ט", label: "שכונה ט׳", city: "באר שבע", address: "שדרות ירושלים 10" },
   { value: "שלומי", label: "שלומי", city: "שלומי", address: "ההשראה 2" },
-  { value: "תלפיות_מזרח", label: "תלפיות מזרח", city: "ירושלים", address: "דב גרונר מרכז מסחרי" }
+  { value: "תלפיות_מזרח", label: "תלפיות מזרח", city: "ירושלים", address: "דב גרונר מרכז מסחרי" },
+  { value: "משרדי הרשת", label: "משרדי הרשת", city: "באר שבע", address: "שלושת בני עין חרוד 80" }
 ];

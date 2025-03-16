@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import Modal from './Modal';
 import OtpInput from './OtpInput';
-import { CheckCircle2, AlertCircle, MessageSquareText } from 'lucide-react';
+import { CheckCircle2, AlertCircle, MessageSquareText, AlertTriangle } from 'lucide-react';
 
 interface OtpVerificationModalProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface OtpVerificationModalProps {
   onVerify: (code: string) => Promise<boolean>;
   onResendCode: () => Promise<boolean>;
   onSuccess: () => void;
+  onBypassVerification?: () => void;
 }
 
 const OtpVerificationModal: React.FC<OtpVerificationModalProps> = ({
@@ -19,7 +20,8 @@ const OtpVerificationModal: React.FC<OtpVerificationModalProps> = ({
   phoneNumber,
   onVerify,
   onResendCode,
-  onSuccess
+  onSuccess,
+  onBypassVerification
 }) => {
   const [otpValue, setOtpValue] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,6 +29,7 @@ const OtpVerificationModal: React.FC<OtpVerificationModalProps> = ({
   const [success, setSuccess] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const [resending, setResending] = useState(false);
+  const [showBypassConfirm, setShowBypassConfirm] = useState(false);
   
   // הצגה מיידית של מודאל לשליחת קוד בפתיחה
   useEffect(() => {
@@ -35,6 +38,7 @@ const OtpVerificationModal: React.FC<OtpVerificationModalProps> = ({
       setError(null);
       setSuccess(false);
       setCountdown(60);
+      setShowBypassConfirm(false);
       handleResendCode();
     }
   }, [isOpen]);
@@ -111,6 +115,24 @@ const OtpVerificationModal: React.FC<OtpVerificationModalProps> = ({
     }
   };
 
+  // פונקציה חדשה לעקיפת אימות
+  const handleBypass = () => {
+    if (showBypassConfirm) {
+      // המשתמש אישר את העקיפה
+      if (onBypassVerification) {
+        console.log('Bypassing OTP verification');
+        setSuccess(true);
+        setTimeout(() => {
+          onBypassVerification();
+          onClose();
+        }, 1000);
+      }
+    } else {
+      // הצג את חלון האישור תחילה
+      setShowBypassConfirm(true);
+    }
+  };
+
   return (
     <Modal 
       isOpen={isOpen} 
@@ -124,6 +146,34 @@ const OtpVerificationModal: React.FC<OtpVerificationModalProps> = ({
             <CheckCircle2 className="w-16 h-16 text-emerald-500 animate-pulse" />
             <h3 className="text-xl font-semibold text-white">האימות הושלם בהצלחה!</h3>
             <p className="text-white/70 text-center">אישור ההגעה שלך נרשם במערכת</p>
+          </div>
+        ) : showBypassConfirm ? (
+          // תצוגת אישור עקיפת אימות
+          <div className="flex flex-col items-center justify-center space-y-6 py-4">
+            <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-amber-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white text-center">
+              האם אתה בטוח שברצונך להמשיך ללא אימות?
+            </h3>
+            <p className="text-white/70 text-center">
+              אימות מספר הטלפון מסייע לנו לאמת את פרטי ההרשמה ולמנוע טעויות.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row w-full gap-4 mt-4">
+              <button
+                onClick={() => setShowBypassConfirm(false)}
+                className="bg-gray-600 hover:bg-gray-500 text-white py-3 px-5 rounded-lg transition-all flex-1"
+              >
+                חזרה לאימות
+              </button>
+              <button
+                onClick={handleBypass}
+                className="bg-amber-600 hover:bg-amber-500 text-white py-3 px-5 rounded-lg transition-all flex-1"
+              >
+                המשך ללא אימות
+              </button>
+            </div>
           </div>
         ) : (
           // תצוגת הזנת קוד
@@ -183,6 +233,15 @@ const OtpVerificationModal: React.FC<OtpVerificationModalProps> = ({
                   ? `שלח קוד חדש (${countdown})`
                   : 'שלח קוד חדש'}
               </button>
+              
+              {onBypassVerification && (
+                <button
+                  onClick={handleBypass}
+                  className="mt-4 bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 font-medium py-3 px-5 rounded-lg transition-all border border-amber-500/30"
+                >
+                  לא קיבלתי קוד - המשך ללא אימות
+                </button>
+              )}
             </div>
           </>
         )}

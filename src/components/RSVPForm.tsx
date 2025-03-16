@@ -492,10 +492,11 @@ const RSVPForm: React.FC<RSVPFormProps> = ({ onRsvpChange }) => {
           setOtpModalOpen(false);
           setVerifyingForEdit(false); // Reset this flag when closing without verification
         }}
-        phoneNumber={verifyingPhone}
+        phoneNumber={verifyingPhone || ''}
         onVerify={handleVerifyOtp}
         onResendCode={handleSendOtp}
         onSuccess={handleVerificationSuccess}
+        onBypassVerification={handleVerificationSuccess}
       />
 
       {isSubmitting && (

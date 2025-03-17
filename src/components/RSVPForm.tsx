@@ -721,7 +721,12 @@ const RSVPForm: React.FC<RSVPFormProps> = ({ onRsvpChange }) => {
               formatOptionLabel={(option) => {
                 // אם זו אפשרות "הסניף שלי לא מופיע ברשימה"
                 if (option.value === 'custom') {
-                  return <div>{option.label}</div>;
+                  return <div className="bg-amber-500/20 p-2 rounded flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-amber-500/30 flex items-center justify-center">
+                      <Edit className="w-3 h-3 text-amber-500" />
+                    </div>
+                    <span className="text-amber-500 font-medium">{option.label}</span>
+                  </div>;
                 }
                 
                 // אחרת, זה סניף רגיל - נבדוק אם יש לו כתובת
@@ -761,24 +766,62 @@ const RSVPForm: React.FC<RSVPFormProps> = ({ onRsvpChange }) => {
               }}
               isDisabled={isSubmitting}
               isSearchable={true}
-              noOptionsMessage={() => "לא נמצאו סניפים"}
+              noOptionsMessage={() => (
+                <div className="p-3 text-center">
+                  <div className="text-amber-300">לא נמצאו סניפים מתאימים</div>
+                  <button 
+                    type="button"
+                    className="mt-2 bg-amber-500/20 hover:bg-amber-500/30 transition-colors px-4 py-2 rounded-lg text-amber-400 text-sm"
+                    onClick={() => {
+                      setShowCustomBranch(true);
+                      setFormData({ ...formData, branch: '', branchDisplayName: '' });
+                    }}
+                  >
+                    הזנת סניף ידנית
+                  </button>
+                </div>
+              )}
             />
-            <div className="text-emerald-400/70 text-xs mt-1 mr-2">* ניתן לחפש סניף על ידי הקלדת שם</div>
+            <div className="text-emerald-400/70 text-xs mt-1 mr-2 flex items-center justify-between">
+              <span>* ניתן לחפש סניף על ידי הקלדת שם</span>
+              {!showCustomBranch && (
+                <button 
+                  type="button" 
+                  className="text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1"
+                  onClick={() => {
+                    setShowCustomBranch(true);
+                    setFormData({ ...formData, branch: '', branchDisplayName: '' });
+                  }}
+                >
+                  <Edit className="w-3 h-3" />
+                  הסניף שלי לא מופיע ברשימה
+                </button>
+              )}
+            </div>
             
             {showCustomBranch && (
-              <input
-                type="text"
-                className={clsx(inputClass, "mt-4")}
-                placeholder="שם הסניף"
-                value={formData.customBranch || ''}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  customBranch: e.target.value, 
-                  branch: e.target.value,
-                  branchDisplayName: e.target.value // Save custom branch as display name too
-                })}
-                disabled={isSubmitting}
-              />
+              <div className="mt-4 border border-amber-500/30 rounded-xl p-4 bg-amber-500/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded-full bg-amber-500/30 flex items-center justify-center">
+                    <Edit className="w-3 h-3 text-amber-500" />
+                  </div>
+                  <h3 className="text-amber-400 font-medium">הזנת סניף ידנית</h3>
+                </div>
+                <input
+                  type="text"
+                  className={clsx(inputClass, "bg-black/60 !border-amber-500/30 focus:!border-amber-500 focus:!ring-amber-500/20")}
+                  placeholder="שם הסניף (לדוגמה: רחובות - הרצל)"
+                  value={formData.customBranch || ''}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    customBranch: e.target.value, 
+                    branch: e.target.value,
+                    branchDisplayName: e.target.value // Save custom branch as display name too
+                  })}
+                  disabled={isSubmitting}
+                />
+                <div className="text-amber-400/80 text-xs mt-2">הזן את שם הסניף בצורה מדויקת (כולל עיר במידת הצורך)</div>
+              </div>
             )}
           </div>
 

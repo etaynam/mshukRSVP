@@ -740,6 +740,27 @@ const RSVPForm: React.FC<RSVPFormProps> = ({ onRsvpChange }) => {
                   </div>
                 );
               }}
+              filterOption={(option, inputValue) => {
+                // חיפוש מורחב בכל השדות - שם הסניף, עיר וכתובת
+                if (option.value === 'custom') return true; // אפשרות "הסניף שלי לא מופיע ברשימה" תמיד תוצג
+                
+                const branch = branches.find(b => b.value === option.value);
+                if (!branch) return false;
+                
+                // המרת הטקסט המחופש לאותיות קטנות להשוואה מקלה
+                const searchValue = inputValue.toLowerCase();
+                
+                // בדיקה בשם הסניף
+                if (branch.label.toLowerCase().includes(searchValue)) return true;
+                
+                // בדיקה בשם העיר
+                if (branch.city && branch.city.toLowerCase().includes(searchValue)) return true;
+                
+                // בדיקה בכתובת
+                if (branch.address && branch.address.toLowerCase().includes(searchValue)) return true;
+                
+                return false;
+              }}
               onChange={(option: Branch | null) => {
                 if (option?.value === 'custom') {
                   setShowCustomBranch(true);
